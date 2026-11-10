@@ -53,8 +53,8 @@ la VM. Anote la IP (ejemplo: `34.120.45.67`).
 Entre por SSH (botón **SSH** en la consola) y ejecute:
 
 ```bash
-git clone https://github.com/ESTEBAN557/Brevetto.git
-cd Brevetto
+git clone https://github.com/Ssanchezl3/BrevettoGCP.git
+cd BrevettoGCP
 bash deploy/setup-vm.sh      # instala Docker y crea swap
 exit                         # salga y vuelva a entrar por SSH para usar docker sin sudo
 ```
@@ -62,7 +62,7 @@ exit                         # salga y vuelva a entrar por SSH para usar docker 
 ## 4. Configurar las variables
 
 ```bash
-cd Brevetto
+cd BrevettoGCP
 cp deploy/.env.prod.example .env.prod
 nano .env.prod
 ```

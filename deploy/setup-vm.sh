@@ -19,5 +19,6 @@ if ! swapon --show | grep -q /swapfile; then
 fi
 
 echo "==> Listo. Cierre la sesión SSH y vuelva a entrar para usar 'docker' sin sudo."
-echo "    Luego: cp deploy/.env.prod.example .env.prod && nano .env.prod"
+echo "    Luego, desde la carpeta BrevettoGCP:"
+echo "           cp deploy/.env.prod.example .env.prod && nano .env.prod"
 echo "           docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build"

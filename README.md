@@ -6,8 +6,8 @@ Plataforma inteligente de automatización, radicación, clasificación asistida 
 
 | | |
 | :--- | :--- |
-| **URL pública** | **`https://<PENDIENTE: dominio del despliegue en GCP>`** |
-| Manual de usuario | `https://<dominio>/ayuda` (también enlazado desde la app) |
+| **URL pública** | **https://35-237-79-146.sslip.io** |
+| Manual de usuario | https://35-237-79-146.sslip.io/ayuda (también enlazado desde la app) |
 | Nube | Google Cloud Platform · Compute Engine (Docker Compose + Caddy con HTTPS automático) |
 | Guía de despliegue | [Despliegue en GCP](#-despliegue-en-google-cloud-gcp) · guía completa en [`deploy/README.md`](deploy/README.md) |
 | Wiki del proyecto | https://github.com/Ssanchezl3/BrevettoGCP/wiki |
@@ -216,12 +216,64 @@ En un despliegue real para Coltebienes, **omite los comandos `seed_*`** (solo ca
 | Abrir un documento de un expediente | El PDF se visualiza (valida la ruta de MinIO vía Caddy) |
 | `https://<dominio>/django-admin/` | Admin de Django con estilos |
 
-### Operación y actualizaciones
+### Paso 7 — Entrar a la aplicación
+Con los datos de demostración cargados (Paso 5):
+
+| Rol | Ruta | Credenciales |
+| :--- | :--- | :--- |
+| **Personal** | `/login/empleados` | usuario `demo` · contraseña `Brevetto2026!` |
+| **Cliente (Mi Portal)** | `/login` | tipo **NIT**, número `900.845.112-3` → pide el código; en modo demo **aparece en pantalla**. Úsalo de inmediato (solo hay un código activo a la vez). |
+| **Radicación pública** | `/portal/radicacion` | contrato `CONT-2025-018` + NIT `900.845.112-3` |
+
+---
+
+## 🔌 Prender y apagar la app
+
+La VM **cobra cómputo solo mientras está encendida**. Apágala cuando no la uses para ahorrar créditos; los
+contenedores tienen `restart: unless-stopped`, así que **arrancan solos** al encender de nuevo (no hay que
+repetir ningún paso). Estos comandos se ejecutan **desde tu PC** (donde tienes `gcloud`):
+
 ```bash
-dc logs -f backend celery_worker          # ver logs en vivo
-git pull && dc up -d --build               # actualizar a la última versión
-dc exec -T db pg_dump -U brevetto brevetto | gzip > backup_$(date +%F).sql.gz   # respaldo de BD
+# APAGAR la app (deja de cobrar cómputo)
+gcloud compute instances stop brevetto --zone=us-east1-b
+
+# PRENDER la app (vuelve a estar disponible en el mismo dominio en 1-2 min)
+gcloud compute instances start brevetto --zone=us-east1-b
+
+# Ver si está encendida (RUNNING) o apagada (TERMINATED)
+gcloud compute instances describe brevetto --zone=us-east1-b --format="value(status)"
 ```
+
+> 💡 La **IP estática** se conserva al apagar/encender, por lo que el dominio `sslip.io` no cambia.
+> Mientras está apagada, la IP reservada y el disco cobran un valor mínimo. Para no pagar nada, hay que
+> borrar los recursos (ver [`deploy/README.md`](deploy/README.md) → *Borrar todo*).
+
+**Reiniciar solo los contenedores sin apagar la VM** (entra antes por `gcloud compute ssh brevetto --zone=us-east1-b && cd BrevettoGCP`):
+```bash
+docker compose -f docker-compose.prod.yml --env-file .env.prod restart   # reinicia todo
+docker compose -f docker-compose.prod.yml --env-file .env.prod stop       # detiene los contenedores
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d       # vuelve a levantarlos
+```
+
+---
+
+## 🛠️ Operación y mantenimiento
+
+Dentro de la VM (`gcloud compute ssh brevetto --zone=us-east1-b && cd BrevettoGCP`), con el alias
+`alias dc='docker compose -f docker-compose.prod.yml --env-file .env.prod'`:
+
+```bash
+dc ps                                      # estado de los servicios
+dc logs -f backend celery_worker           # ver logs en vivo
+git pull && dc up -d --build               # actualizar a la última versión del repositorio
+dc exec -T db pg_dump -U brevetto brevetto | gzip > backup_$(date +%F).sql.gz   # respaldo de la BD
+```
+
 Los documentos viven en el volumen `brevetto-prod_minio_data`. En GCP puedes programar una **instantánea
-diaria del disco** de la VM (cubre base de datos y archivos). Ver detalles y solución de problemas en
-[`deploy/README.md`](deploy/README.md).
+diaria del disco** de la VM (cubre base de datos y archivos).
+
+> **Nota sobre el almacenamiento:** el servicio `minio` usa el fork `docker.io/pgsty/silo` porque MinIO
+> archivó sus imágenes oficiales (Docker Hub y quay.io dejaron de servirlas en 2026). Es un reemplazo
+> compatible con la API S3 y no requiere cambios adicionales.
+
+Más detalle (consulta de créditos, borrado total y solución de problemas) en [`deploy/README.md`](deploy/README.md).

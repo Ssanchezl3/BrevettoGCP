@@ -53,8 +53,8 @@ la VM. Anote la IP (ejemplo: `34.120.45.67`).
 Entre por SSH (botón **SSH** en la consola) y ejecute:
 
 ```bash
-git clone https://github.com/ESTEBAN557/Brevetto.git
-cd Brevetto
+git clone https://github.com/Ssanchezl3/BrevettoGCP.git
+cd BrevettoGCP
 bash deploy/setup-vm.sh      # instala Docker y crea swap
 exit                         # salga y vuelva a entrar por SSH para usar docker sin sudo
 ```
@@ -62,7 +62,7 @@ exit                         # salga y vuelva a entrar por SSH para usar docker 
 ## 4. Configurar las variables
 
 ```bash
-cd Brevetto
+cd BrevettoGCP
 cp deploy/.env.prod.example .env.prod
 nano .env.prod
 ```
@@ -130,6 +130,44 @@ dc exec -T db pg_dump -U brevetto brevetto | gzip > backup_$(date +%F).sql.gz
 Los documentos están en el volumen `brevetto-prod_minio_data`. En GCP se puede programar una instantánea
 diaria del disco de la VM (**Compute Engine → Instantáneas → Crear programación**), que cubre base de datos y archivos.
 
+## Apagar y encender la VM (ahorro de créditos)
+
+La VM cobra cómputo **solo mientras está encendida**. Cuando no se use (por ejemplo entre sustentaciones),
+conviene apagarla. Los contenedores tienen `restart: unless-stopped`, así que **arrancan solos** al encender
+de nuevo; no hay que repetir ningún paso de instalación.
+
+```bash
+# Apagar (deja de cobrar cómputo)
+gcloud compute instances stop brevetto --zone=us-east1-b
+
+# Encender de nuevo (Brevetto vuelve a estar disponible en el mismo dominio en 1-2 min)
+gcloud compute instances start brevetto --zone=us-east1-b
+
+# Ver si está encendida o apagada
+gcloud compute instances describe brevetto --zone=us-east1-b --format="value(status)"
+```
+
+Notas:
+- La **IP estática** reservada se conserva al apagar/encender, por lo que el dominio `sslip.io` no cambia.
+- Mientras la VM está apagada, la IP estática reservada y el disco siguen cobrando un valor muy pequeño.
+  Para no pagar nada hay que liberar esos recursos (ver más abajo).
+
+### Borrar todo (dejar de pagar por completo)
+
+```bash
+gcloud compute instances delete brevetto --zone=us-east1-b   # borra la VM y su disco
+gcloud compute addresses delete brevetto-ip --region=us-east1 # libera la IP estática
+```
+
+> Esto elimina también los datos (base de datos y documentos). Haga una copia de seguridad antes si los necesita.
+
+## Consultar créditos y gasto
+
+El **saldo de créditos** solo se ve de forma fiable en la consola web:
+**[console.cloud.google.com/billing](https://console.cloud.google.com/billing)** → la cuenta de facturación →
+**Credits** (saldo y fecha de expiración) y **Reports** (gasto por proyecto). `gcloud` no expone el saldo de
+créditos; `gcloud billing projects describe brevetto-prod` solo confirma que la facturación está vinculada.
+
 ## Problemas frecuentes
 
 | Síntoma | Causa y solución |
@@ -139,6 +177,7 @@ diaria del disco de la VM (**Compute Engine → Instantáneas → Crear programa
 | Los PDF no se ven pero la API responde | Cambió `AWS_STORAGE_BUCKET_NAME` sin reiniciar Caddy, o `BREVETTO_DOMAIN` tiene `https://`. |
 | Documentos quedan en "Requiere revisión" | Falta `GEMINI_API_KEY` o la clave venció: es el comportamiento esperado (revisión humana). |
 | La compilación del frontend se cae por memoria | Ejecute `deploy/setup-vm.sh` (crea swap) o use `e2-medium`. |
+| `401 UNAUTHORIZED` al descargar la imagen de MinIO | MinIO archivó sus imágenes oficiales. El proyecto usa el fork `docker.io/pgsty/silo`; si su copia del repo aún apunta a `quay.io/minio/minio`, haga `git pull`. |
 
 ## Costo aproximado
 

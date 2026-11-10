@@ -81,7 +81,10 @@ services:
       retries: 20
 
   minio:
-    image: quay.io/minio/minio:latest
+    # MinIO archivó sus imágenes oficiales (Docker Hub y quay.io dejaron de servirlas en sept. 2026).
+    # pgsty/silo es un fork community drop-in: corre como root, acepta las mismas variables
+    # MINIO_ROOT_USER/PASSWORD y antepone "silo" al command (=> "silo server /data ...").
+    image: docker.io/pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:

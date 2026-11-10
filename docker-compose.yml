@@ -44,7 +44,9 @@ services:
 
   # --------------------------------------------------------------- MINIO ---
   minio:
-    image: quay.io/minio/minio:latest   # Docker Hub ya no publica minio/minio; registro oficial en quay.io
+    # MinIO archivó sus imágenes oficiales (Docker Hub y quay.io dejaron de servirlas en sept. 2026).
+    # pgsty/silo es un fork community drop-in, compatible con la API S3 y las mismas variables.
+    image: docker.io/pgsty/silo:RELEASE.2026-09-16T00-00-00Z
     container_name: brevetto_minio
     restart: unless-stopped
     command: server /data --console-address ":9001"

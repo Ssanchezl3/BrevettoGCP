@@ -139,6 +139,7 @@ diaria del disco de la VM (**Compute Engine → Instantáneas → Crear programa
 | Los PDF no se ven pero la API responde | Cambió `AWS_STORAGE_BUCKET_NAME` sin reiniciar Caddy, o `BREVETTO_DOMAIN` tiene `https://`. |
 | Documentos quedan en "Requiere revisión" | Falta `GEMINI_API_KEY` o la clave venció: es el comportamiento esperado (revisión humana). |
 | La compilación del frontend se cae por memoria | Ejecute `deploy/setup-vm.sh` (crea swap) o use `e2-medium`. |
+| `401 UNAUTHORIZED` al descargar la imagen de MinIO | MinIO archivó sus imágenes oficiales. El proyecto usa el fork `docker.io/pgsty/silo`; si su copia del repo aún apunta a `quay.io/minio/minio`, haga `git pull`. |
 
 ## Costo aproximado
 

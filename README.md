@@ -83,7 +83,8 @@ BREVETTO_URL=http://localhost:3000 npm test      # o https://localhost con docke
 | Redis 7 | localhost:6379 | — |
 | MinIO API / Consola | http://localhost:9000 / http://localhost:9001 | minioadmin / minioadmin |
 
-> La imagen de MinIO se descarga desde `quay.io/minio/minio` porque Docker Hub ya no publica `minio/minio`.
+> El almacenamiento de objetos usa `docker.io/pgsty/silo` (fork community compatible con la API S3 de MinIO):
+> MinIO archivó sus imágenes oficiales y en septiembre de 2026 dejaron de poder descargarse desde Docker Hub y quay.io.
 
 ### 5. Endpoints implementados (Sprint 1, autenticación JWT `Authorization: Bearer <token>`)
 
